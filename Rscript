@@ -1,0 +1,64 @@
+# Load required packages
+library(dplyr)
+
+# Step 1: Download and unzip dataset if not already present
+dataset_url <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+zip_file <- "dataset.zip"
+data_path <- "UCI HAR Dataset"
+
+if (!file.exists(data_path)) {
+  download.file(dataset_url, zip_file, mode = "wb")
+  unzip(zip_file)
+}
+
+# Step 2: Load activity labels and features
+activity_labels <- read.table(file.path(data_path, "activity_labels.txt"), col.names = c("id", "activity"))
+features <- read.table(file.path(data_path, "features.txt"), col.names = c("index", "feature"))
+
+# Step 3: Extract only the measurements on the mean and standard deviation
+features_wanted <- grep("mean\\(\\)|std\\(\\)", features$feature)
+features_names <- features[features_wanted, "feature"]
+
+# Step 4: Clean the feature names
+features_names <- gsub("\\(\\)", "", features_names)
+features_names <- gsub("-", "_", features_names)
+features_names <- gsub("^t", "Time", features_names)
+features_names <- gsub("^f", "Frequency", features_names)
+features_names <- gsub("Acc", "Accelerometer", features_names)
+features_names <- gsub("Gyro", "Gyroscope", features_names)
+features_names <- gsub("Mag", "Magnitude", features_names)
+features_names <- gsub("BodyBody", "Body", features_names)
+
+# Step 5: Load and subset training data
+subject_train <- read.table(file.path(data_path, "train", "subject_train.txt"), col.names = "subject")
+x_train <- read.table(file.path(data_path, "train", "X_train.txt"))[, features_wanted]
+y_train <- read.table(file.path(data_path, "train", "y_train.txt"), col.names = "activity")
+
+# Step 6: Load and subset test data
+subject_test <- read.table(file.path(data_path, "test", "subject_test.txt"), col.names = "subject")
+x_test <- read.table(file.path(data_path, "test", "X_test.txt"))[, features_wanted]
+y_test <- read.table(file.path(data_path, "test", "y_test.txt"), col.names = "activity")
+
+# Step 7: Merge training and test data
+x_data <- rbind(x_train, x_test)
+y_data <- rbind(y_train, y_test)
+subject_data <- rbind(subject_train, subject_test)
+
+# Step 8: Combine all data into one data frame
+complete_data <- cbind(subject_data, y_data, x_data)
+colnames(complete_data)[3:ncol(complete_data)] <- features_names
+
+# Step 9: Apply descriptive activity names
+complete_data$activity <- factor(complete_data$activity,
+                                  levels = activity_labels$id,
+                                  labels = activity_labels$activity)
+
+# Step 10: Create tidy dataset with average of each variable for each activity and subject
+tidy_data <- complete_data %>%
+  group_by(subject, activity) %>%
+  summarise(across(everything(), mean), .groups = "drop")
+
+# Step 11: Write tidy data to file
+write.table(tidy_data, "tidydata.txt", row.name = FALSE)
+
+# Done!
