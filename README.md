@@ -40,7 +40,7 @@ This R script performs the following steps:
 
 ## How to Run
 
-1. Download the UCI HAR Dataset from the [official UCI repository](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/).
+1. Download the UCI HAR Dataset from the [official UCI repository](https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones).
 2. Unzip the dataset to a folder named `UCI HAR Dataset`.
 3. Save the provided R script (e.g., `process_data.R`) in the same directory as the dataset.
 4. Run the script in R or RStudio by executing the following command:
